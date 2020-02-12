@@ -1,0 +1,38 @@
+name: pretty-diff
+version: 0.1.0.0
+synopsis: Pretty printing a diff of two values.
+description: Please see the README at <https://github.com/stoeffel/pretty-diff>.
+author: Christoph Hermann
+maintainer: schtoeffel@gmail.com
+copyright: 2020 Christoph Hermann
+homepage: https://github.com/stoeffel/pretty-diff#readme
+license-file: LICENSE
+category: Diffing
+github: stoeffel/pretty-diff
+extra-doc-files:
+- README.md
+- CHANGELOG.md
+library:
+  dependencies:
+  - base >= 4.10.1.0 && < 5
+  - data-default >= 0.7 && < 0.8
+  - Diff >= 0.3 && < 0.4
+  - text >= 1.2 && < 1.3
+  exposed-modules:
+  - Pretty.Diff
+  source-dirs: src
+tests:
+  spec:
+    dependencies:
+    - base
+    - Diff >= 0.3 && < 0.4
+    - data-default >= 0.7 && < 0.8
+    - tasty >= 1.1 && < 1.3
+    - tasty-hunit
+    - pretty-diff
+    - tasty-test-reporter
+    - text >= 1.2 && < 1.3
+    main: Main.hs
+    source-dirs:
+    - test
+    - src
