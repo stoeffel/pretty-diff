@@ -29,8 +29,8 @@ module Pretty.Diff
 
     -- * pretty printing
     pretty,
-    actual,
-    expected,
+    above,
+    below,
   )
 where
 
@@ -99,24 +99,24 @@ data Wrapping
 -- | Printing a full diff of both values separated by some pipes.
 pretty :: Show a => Config -> a -> a -> Text
 pretty Config {separatorText, wrapping} x y =
-  [ actual wrapping x y,
+  [ above wrapping x y,
     separator separatorText,
-    expected wrapping x y
+    below wrapping x y
   ]
     & mconcat
 
 -- | Printing The first value and the diff indicator above.
 --
 --  @
---  Diff.actual Diff.NoWrap "1234" "_23"
+--  Diff.above Diff.NoWrap "1234" "_23"
 --  @
 --
 --  @
 --  ▼ ▼
 -- "1234"
 --  @
-actual :: Show a => Wrapping -> a -> a -> Text
-actual wrapping x y =
+above :: Show a => Wrapping -> a -> a -> Text
+above wrapping x y =
   wrap wrapping [diffLine First down x y, Text.pack (show x)]
     & filterEmptyLines
     & Text.unlines
@@ -124,15 +124,15 @@ actual wrapping x y =
 -- | Printing The second value and the diff indicator below.
 --
 --  @
---  Diff.expected Diff.NoWrap "1234" "_23"
+--  Diff.below Diff.NoWrap "1234" "_23"
 --  @
 --
 --  @
 -- "_23"
 --  ▲
 --  @
-expected :: Show a => Wrapping -> a -> a -> Text
-expected wrapping x y =
+below :: Show a => Wrapping -> a -> a -> Text
+below wrapping x y =
   wrap wrapping [Text.pack (show y), diffLine Second up x y]
     & filterEmptyLines
     & Text.unlines
