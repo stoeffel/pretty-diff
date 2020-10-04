@@ -13,7 +13,7 @@ self: super:
         url = "git@github.com:jwoudenberg/junit-xml";
         rev = "9b5745c3c190205f662233abe5e3bf65e12fd55c";
       };
-    in self.haskell.lib.dontCheck
-    (self.haskellPackages.callCabal2nix "junit-xml" src { });
+      in self.haskell.lib.dontCheck
+      (self.haskellPackages.callCabal2nix "junit-xml" src { });
   });
 }
