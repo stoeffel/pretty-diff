@@ -1,5 +1,5 @@
 name: pretty-diff
-version: 0.2.0.2
+version: 0.2.0.3
 synopsis: Pretty printing a diff of two values.
 description: Please see the README at <https://github.com/stoeffel/pretty-diff>.
 author: Christoph Hermann
@@ -27,7 +27,7 @@ tests:
     - base
     - Diff
     - data-default
-    - tasty >= 1.1 && < 1.4
+    - tasty >= 1.1 && < 1.5
     - tasty-hunit
     - pretty-diff
     - tasty-test-reporter

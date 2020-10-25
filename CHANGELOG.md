@@ -1,3 +1,7 @@
+# 0.2.0.3
+
+- Relax version bounds to support `tasty-1.4`
+
 # 0.2.0.2
 
 - Relax version bounds to support `Diff-0.4`
