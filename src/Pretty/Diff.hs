@@ -117,7 +117,13 @@ pretty Config {separatorText, wrapping} x y =
 --  @
 above :: Wrapping -> Text -> Text -> Text
 above wrapping x y =
-  wrap wrapping [diffLine First down x y, x]
+  wrap
+    wrapping
+    ( Diff.getDiff
+        (Text.unpack x)
+        (Text.unpack y)
+        & withDiffLine First down
+    )
     & filterEmptyLines
     & Text.unlines
 
@@ -133,7 +139,13 @@ above wrapping x y =
 --  @
 below :: Wrapping -> Text -> Text -> Text
 below wrapping x y =
-  wrap wrapping [y, diffLine Second up x y]
+  wrap
+    wrapping
+    ( Diff.getDiff
+        (Text.unpack x)
+        (Text.unpack y)
+        & withDiffLine Second up
+    )
     & filterEmptyLines
     & Text.unlines
 
@@ -154,25 +166,26 @@ up = '▲'
 
 data Position = First | Second
 
-diffLine :: Position -> Char -> Text -> Text -> Text
-diffLine pos differ a b =
-  Diff.getDiff
-    (Text.unpack a)
-    (Text.unpack b)
-    & mapMaybe (toDiffLine pos differ)
-    & Text.pack
-    & Text.stripEnd
+withDiffLine :: Position -> Char -> [Diff.Diff Char] -> [Text]
+withDiffLine pos differ diffs =
+  let (content, indicators) =
+        diffs
+          & mapMaybe (toDiffLine pos differ)
+          & unzip
+   in case pos of
+        First -> [Text.pack indicators & Text.stripEnd, Text.pack content & Text.stripEnd]
+        Second -> [Text.pack content & Text.stripEnd, Text.pack indicators & Text.stripEnd]
 
-toDiffLine :: Position -> Char -> Diff.Diff a -> Maybe Char
+toDiffLine :: Position -> Char -> Diff.Diff Char -> Maybe (Char, Char)
 toDiffLine pos c d =
   case d of
-    Diff.First _ -> case pos of
-      First -> Just c
+    Diff.First x -> case pos of
+      First -> Just (x, c)
       Second -> Nothing
-    Diff.Second _ -> case pos of
+    Diff.Second x -> case pos of
       First -> Nothing
-      Second -> Just c
-    Diff.Both _ _ -> Just ' '
+      Second -> Just (x, c)
+    Diff.Both x _ -> Just (x, ' ')
 
 separator :: Maybe Text -> Text
 separator maybeComparison =
