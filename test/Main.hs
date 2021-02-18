@@ -22,134 +22,224 @@ tests :: TestTree
 tests =
   testGroup
     "Pretty.Diff"
-    [ testCase "Comparing two equal strings" $
+    [ testGroup
+        "pretty"
+        [ testCase "Comparing two equal strings" $
+            expectDiffToEqual
+              ( Diff.pretty
+                  def
+                  "Hello"
+                  "Hello"
+              )
+              [ "Hello",
+                "╷",
+                "│",
+                "╵",
+                "Hello"
+              ],
+          testCase "Removed characters" $
+            expectDiffToEqual
+              ( Diff.pretty
+                  def
+                  "Hello"
+                  "Hel"
+              )
+              [ "   ▼▼",
+                "Hello",
+                "╷",
+                "│",
+                "╵",
+                "Hel"
+              ],
+          testCase "Added characters" $
+            expectDiffToEqual
+              ( Diff.pretty
+                  def
+                  "Hel"
+                  "Hello"
+              )
+              [ "Hel",
+                "╷",
+                "│",
+                "╵",
+                "Hello",
+                "   ▲▲"
+              ],
+          testCase "Changed characters" $
+            expectDiffToEqual
+              ( Diff.pretty
+                  def
+                  "Axxx"
+                  "Bxxx"
+              )
+              [ "▼",
+                "Axxx",
+                "╷",
+                "│",
+                "╵",
+                "Bxxx",
+                "▲"
+              ],
+          testCase "Mixed changes" $
+            expectDiffToEqual
+              ( Diff.pretty
+                  def
+                  "12345"
+                  "1004"
+              )
+              [ " ▼▼ ▼",
+                "12345",
+                "╷",
+                "│",
+                "╵",
+                "1004",
+                " ▲▲"
+              ],
+          testCase "Multiline changes (on first and last line)" $
+            expectDiffToEqual
+              ( Diff.pretty
+                  def {Diff.wrapping = Diff.Wrap 5}
+                  "0900000000"
+                  "9000000000"
+              )
+              [ "▼",
+                "09000",
+                "00000",
+                "╷",
+                "│",
+                "╵",
+                "90000",
+                "00000",
+                "    ▲"
+              ],
+          testCase "Multiline changes (inbetween)" $
+            expectDiffToEqual
+              ( Diff.pretty
+                  def
+                    { Diff.wrapping = Diff.Wrap 5
+                    }
+                  "0000090000"
+                  "0090000000"
+              )
+              [ "00000",
+                "▼",
+                "90000",
+                "╷",
+                "│",
+                "╵",
+                "00900",
+                "  ▲",
+                "00000"
+              ],
+          testCase "With separator text" $
+            expectDiffToEqual
+              ( Diff.pretty
+                  Diff.Config
+                    { Diff.separatorText = Just "equals",
+                      Diff.wrapping = Diff.Wrap 5
+                    }
+                  "0000090000"
+                  "0090000000"
+              )
+              [ "00000",
+                "▼",
+                "90000",
+                "╷",
+                "│ equals",
+                "╵",
+                "00900",
+                "  ▲",
+                "00000"
+              ]
+        ],
+      testGroup
+        "prettyMultilines"
+        [ testCase "Multiline content with full context" $
+            expectDiffToEqual
+              ( Diff.prettyMultilines
+                  def
+                  Diff.FullContext
+                  ["a", "b", "c", "d", "e", "f"]
+                  ["a", "b", "c", "D", "e", "f"]
+              )
+              [ "a",
+                "b",
+                "c",
+                "▼",
+                "d",
+                "e",
+                "f",
+                "╷",
+                "│",
+                "╵",
+                "a",
+                "b",
+                "c",
+                "D",
+                "▲",
+                "e",
+                "f"
+              ]
+        ],
+      testCase "Multiline content with narrow context" $
         expectDiffToEqual
-          ( Diff.pretty
+          ( Diff.prettyMultilines
               def
-              "Hello"
-              "Hello"
+              (Diff.Surrounding 1 "...")
+              ["a", "b", "c", "d", "e", "f"]
+              ["a", "b", "c", "D", "e", "f"]
           )
-          [ "Hello" & showText,
-            "╷",
-            "│",
-            "╵",
-            "Hello" & showText
-          ],
-      testCase "Removed characters" $
-        expectDiffToEqual
-          ( Diff.pretty
-              def
-              "Hello"
-              "Hel"
-          )
-          [ "   ▼▼" & forEscapedString,
-            "Hello" & showText,
-            "╷",
-            "│",
-            "╵",
-            "Hel" & showText
-          ],
-      testCase "Added characters" $
-        expectDiffToEqual
-          ( Diff.pretty
-              def
-              "Hel"
-              "Hello"
-          )
-          [ "Hel" & showText,
-            "╷",
-            "│",
-            "╵",
-            "Hello" & showText,
-            "   ▲▲" & forEscapedString
-          ],
-      testCase "Changed characters" $
-        expectDiffToEqual
-          ( Diff.pretty
-              def
-              "Axxx"
-              "Bxxx"
-          )
-          [ "▼" & forEscapedString,
-            "Axxx" & showText,
-            "╷",
-            "│",
-            "╵",
-            "Bxxx" & showText,
-            "▲" & forEscapedString
-          ],
-      testCase "Mixed changes" $
-        expectDiffToEqual
-          ( Diff.pretty
-              def
-              "12345"
-              "1004"
-          )
-          [ " ▼▼ ▼" & forEscapedString,
-            "12345" & showText,
-            "╷",
-            "│",
-            "╵",
-            "1004" & showText,
-            " ▲▲" & forEscapedString
-          ],
-      testCase "Multiline changes (on first and last line)" $
-        expectDiffToEqual
-          ( Diff.pretty
-              def
-                { Diff.wrapping = Diff.Wrap $ 5 + 1 -- + 1 because of "
-                }
-              "0900000000"
-              "9000000000"
-          )
-          [ "▼" & forEscapedString,
-            "09000" & showTextPrefix,
-            "00000" & showTextPostfix,
-            "╷",
-            "│",
-            "╵",
-            "90000" & showTextPrefix,
-            "00000" & showTextPostfix,
-            "    ▲"
-          ],
-      testCase "Multiline changes (inbetween)" $
-        expectDiffToEqual
-          ( Diff.pretty
-              def
-                { Diff.wrapping = Diff.Wrap $ 5 + 1 -- + 1 because of "
-                }
-              "0000090000"
-              "0090000000"
-          )
-          [ "00000" & showTextPrefix,
+          [ "...",
+            "c",
             "▼",
-            "90000" & showTextPostfix,
+            "d",
+            "e",
+            "...",
             "╷",
             "│",
             "╵",
-            "00900" & showTextPrefix,
-            "  ▲" & forEscapedString,
-            "00000" & showTextPostfix
+            "...",
+            "c",
+            "D",
+            "▲",
+            "e",
+            "..."
           ],
-      testCase "With separator text" $
+      testCase "Multiline content with narrow context and multiple diffs" $
         expectDiffToEqual
-          ( Diff.pretty
-              Diff.Config
-                { Diff.separatorText = Just "equals",
-                  Diff.wrapping = Diff.Wrap $ 5 + 1 -- + 1 because of "
-                }
-              "0000090000"
-              "0090000000"
+          ( Diff.prettyMultilines
+              def {Diff.wrapping = Diff.Wrap 3}
+              (Diff.Surrounding 1 "...")
+              ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j"]
+              ["A", "b", "c", "D", "e", "f", "g", "h", "i", "JJJJJJ"]
           )
-          [ "00000" & showTextPrefix,
+          [ "▼",
+            "a",
+            "b",
+            "c",
             "▼",
-            "90000" & showTextPostfix,
+            "d",
+            "e",
+            "...",
+            "i",
+            "▼",
+            "j",
             "╷",
-            "│ equals",
+            "│",
             "╵",
-            "00900" & showTextPrefix,
-            "  ▲" & forEscapedString,
-            "00000" & showTextPostfix
+            "A",
+            "▲",
+            "b",
+            "c",
+            "D",
+            "▲",
+            "e",
+            "...",
+            "i",
+            "JJJ",
+            "▲▲▲",
+            "JJJ",
+            "▲▲▲"
           ]
     ]
 
@@ -163,11 +253,3 @@ expectDiffToEqual actual expected_ = do
                 Text.IO.putStrLn expected
                 throw e
             )
-
-forEscapedString x = " " <> x
-
-showText = Text.pack . show
-
-showTextPrefix x = "\"" <> x
-
-showTextPostfix x = x <> "\""
