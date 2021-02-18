@@ -219,16 +219,33 @@ extractContext context@(Surrounding c sep) (hadDiff, acc, before) xs =
         then acc ++ before
         else acc ++ take c before ++ [sep, "\n"]
     (True, x) : rest ->
-      if hadDiff
-        then
-          if length before <= c * 2
-            then extractContext context (True, acc ++ before ++ [x], []) rest
-            else extractContext context (True, acc ++ take c before ++ [sep, "\n"] ++ takeRight c before ++ [x], []) rest
-        else
-          if length before <= c
-            then extractContext context (True, acc ++ before ++ [x], []) rest
-            else extractContext context (True, acc ++ [sep, "\n"] ++ takeRight c before ++ [x], []) rest
-    (False, x) : rest -> extractContext context (hadDiff, acc, before ++ [x]) rest
+      extractContext
+        context
+        ( True,
+          acc ++ splitSurrounding c sep hadDiff before ++ [x],
+          []
+        )
+        rest
+    (False, x) : rest ->
+      extractContext
+        context
+        ( hadDiff,
+          acc,
+          before ++ [x]
+        )
+        rest
+
+splitSurrounding :: Int -> Text -> Bool -> [Text] -> [Text]
+splitSurrounding n sep hadDiff xs =
+  if hadDiff
+    then
+      if length xs <= n * 2
+        then xs
+        else take n xs ++ [sep, "\n"] ++ takeRight n xs
+    else
+      if length xs <= n
+        then xs
+        else [sep, "\n"] ++ takeRight n xs
 
 takeRight :: Int -> [a] -> [a]
 takeRight i xs = reverse (take i (reverse xs))
