@@ -29,6 +29,7 @@ module Pretty.Diff
 
     -- * pretty printing
     pretty,
+    prettyMultilines,
     above,
     below,
   )
@@ -102,6 +103,15 @@ pretty Config {separatorText, wrapping} x y =
   [ above wrapping x y,
     separator separatorText,
     below wrapping x y
+  ]
+    & mconcat
+
+-- | Printing a full diff of both values separated by some pipes.
+prettyMultilines :: Config -> [Text] -> [Text] -> Text
+prettyMultilines Config {separatorText, wrapping} xs ys =
+  [ zipWith (\x y -> above wrapping x y) xs ys & mconcat,
+    separator separatorText,
+    zipWith (\x y -> below wrapping x y) xs ys & mconcat
   ]
     & mconcat
 
