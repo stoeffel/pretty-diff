@@ -134,7 +134,7 @@ tests =
           testCase "With separator text" $
             expectDiffToEqual
               ( Diff.pretty
-                  Diff.Config
+                  def
                     { Diff.separatorText = Just "equals",
                       Diff.wrapping = Diff.Wrap 5
                     }
@@ -153,14 +153,13 @@ tests =
               ]
         ],
       testGroup
-        "prettyMultilines"
-        [ testCase "Multiline content with full context" $
+        "pretty (multiline)"
+        [ testCase "Multiline content with full multiline context" $
             expectDiffToEqual
-              ( Diff.prettyMultilines
-                  def
-                  Diff.FullContext
-                  ["a", "b", "c", "d", "e", "f"]
-                  ["a", "b", "c", "D", "e", "f"]
+              ( Diff.pretty
+                  def {Diff.multilineContext = Diff.FullContext}
+                  "a\nb\nc\nd\ne\nf"
+                  "a\nb\nc\nD\ne\nf"
               )
               [ "a",
                 "b",
@@ -181,13 +180,37 @@ tests =
                 "f"
               ]
         ],
-      testCase "Multiline content with narrow context" $
+      testCase "Multiline content with default multiline config" $
         expectDiffToEqual
-          ( Diff.prettyMultilines
+          ( Diff.pretty
               def
-              (Diff.Surrounding 1 "...")
-              ["a", "b", "c", "d", "e", "f"]
-              ["a", "b", "c", "D", "e", "f"]
+              "a\nb\nc\nd\ne\nf"
+              "a\nb\nc\nD\ne\nf"
+          )
+          [ "...",
+            "b",
+            "c",
+            "▼",
+            "d",
+            "e",
+            "f",
+            "╷",
+            "│",
+            "╵",
+            "...",
+            "b",
+            "c",
+            "D",
+            "▲",
+            "e",
+            "f"
+          ],
+      testCase "Multiline content with narrow multiline context" $
+        expectDiffToEqual
+          ( Diff.pretty
+              def {Diff.multilineContext = Diff.Surrounding 1 "..."}
+              "a\nb\nc\nd\ne\nf"
+              "a\nb\nc\nD\ne\nf"
           )
           [ "...",
             "c",
@@ -207,11 +230,10 @@ tests =
           ],
       testCase "Multiline content with narrow context and multiple diffs" $
         expectDiffToEqual
-          ( Diff.prettyMultilines
-              def {Diff.wrapping = Diff.Wrap 3}
-              (Diff.Surrounding 1 "...")
-              ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j"]
-              ["A", "b", "c", "D", "e", "f", "g", "h", "i", "JJJJJJ"]
+          ( Diff.pretty
+              def {Diff.wrapping = Diff.Wrap 3, Diff.multilineContext = Diff.Surrounding 1 "..."}
+              "a\nb\nc\nd\ne\nf\ng\nh\ni\nj"
+              "A\nb\nc\nD\ne\nf\ng\nh\ni\nJJJJJJ"
           )
           [ "▼",
             "a",

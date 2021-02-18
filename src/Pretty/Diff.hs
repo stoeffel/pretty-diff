@@ -24,13 +24,12 @@
 -- @
 module Pretty.Diff
   ( -- * Configuration
-    Config (Config, separatorText, wrapping),
+    Config (Config, separatorText, wrapping, multilineContext),
     Wrapping (Wrap, NoWrap),
-    Context (FullContext, Surrounding),
+    MultilineContext (FullContext, Surrounding),
 
     -- * pretty printing
     pretty,
-    prettyMultilines,
     above,
     below,
   )
@@ -86,11 +85,13 @@ data Config = Config
     -- 00000"
     --     ▲
     -- @
-    wrapping :: Wrapping
+    wrapping :: Wrapping,
+    -- | Only used if text passed in is multiline. Options are full or a some surrounding number of lines
+    multilineContext :: MultilineContext
   }
 
 instance Default Config where
-  def = Config {separatorText = Nothing, wrapping = NoWrap}
+  def = Config {separatorText = Nothing, wrapping = NoWrap, multilineContext = Surrounding 2 "..."}
 
 -- | Define whether or not to wrap the diffing lines.
 data Wrapping
@@ -98,23 +99,20 @@ data Wrapping
   | NoWrap
 
 -- | Define how much context surrounding diffs you'd like to show.
-data Context
+data MultilineContext
   = FullContext
   | Surrounding Int Text
 
 -- | Printing a full diff of both values separated by some pipes.
 pretty :: Config -> Text -> Text -> Text
-pretty config x y =
-  prettyMultilines config FullContext [x] [y]
-
--- | Printing a full diff of both values separated by some pipes.
-prettyMultilines :: Config -> Context -> [Text] -> [Text] -> Text
-prettyMultilines Config {separatorText, wrapping} context xs ys =
-  [ zipWith (\x y -> above' wrapping x y) xs ys & extractContext context (False, [], []) & mconcat,
-    separator separatorText,
-    zipWith (\x y -> below' wrapping x y) xs ys & extractContext context (False, [], []) & mconcat
-  ]
-    & mconcat
+pretty Config {separatorText, wrapping, multilineContext} x y =
+  let xs = Text.lines x
+      ys = Text.lines y
+   in [ zipWith (above' wrapping) xs ys & extractContext multilineContext (False, [], []) & mconcat,
+        separator separatorText,
+        zipWith (below' wrapping) xs ys & extractContext multilineContext (False, [], []) & mconcat
+      ]
+        & mconcat
 
 -- | Printing The first value and the diff indicator above.
 --
@@ -210,8 +208,8 @@ toDiffLine pos c d =
       Second -> Just (x, c)
     Diff.Both x _ -> Just (x, ' ')
 
-extractContext :: Context -> (Bool, [Text], [Text]) -> [(Bool, Text)] -> [Text]
-extractContext FullContext _ xs = map (\(_, a) -> a) xs
+extractContext :: MultilineContext -> (Bool, [Text], [Text]) -> [(Bool, Text)] -> [Text]
+extractContext FullContext _ xs = map snd xs
 extractContext context@(Surrounding c sep) (hadDiff, acc, before) xs =
   case xs of
     [] ->
