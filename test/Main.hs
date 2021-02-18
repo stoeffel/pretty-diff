@@ -29,11 +29,11 @@ tests =
               "Hello"
               "Hello"
           )
-          [ "Hello" & showText,
+          [ "Hello",
             "╷",
             "│",
             "╵",
-            "Hello" & showText
+            "Hello"
           ],
       testCase "Removed characters" $
         expectDiffToEqual
@@ -42,12 +42,12 @@ tests =
               "Hello"
               "Hel"
           )
-          [ "   ▼▼" & forEscapedString,
-            "Hello" & showText,
+          [ "   ▼▼",
+            "Hello",
             "╷",
             "│",
             "╵",
-            "Hel" & showText
+            "Hel"
           ],
       testCase "Added characters" $
         expectDiffToEqual
@@ -56,12 +56,12 @@ tests =
               "Hel"
               "Hello"
           )
-          [ "Hel" & showText,
+          [ "Hel",
             "╷",
             "│",
             "╵",
-            "Hello" & showText,
-            "   ▲▲" & forEscapedString
+            "Hello",
+            "   ▲▲"
           ],
       testCase "Changed characters" $
         expectDiffToEqual
@@ -70,13 +70,13 @@ tests =
               "Axxx"
               "Bxxx"
           )
-          [ "▼" & forEscapedString,
-            "Axxx" & showText,
+          [ "▼",
+            "Axxx",
             "╷",
             "│",
             "╵",
-            "Bxxx" & showText,
-            "▲" & forEscapedString
+            "Bxxx",
+            "▲"
           ],
       testCase "Mixed changes" $
         expectDiffToEqual
@@ -85,71 +85,74 @@ tests =
               "12345"
               "1004"
           )
-          [ " ▼▼ ▼" & forEscapedString,
-            "12345" & showText,
+          [ " ▼▼ ▼",
+            "12345",
             "╷",
             "│",
             "╵",
-            "1004" & showText,
-            " ▲▲" & forEscapedString
+            "1004",
+            " ▲▲"
           ],
       testCase "Multiline changes (on first and last line)" $
         expectDiffToEqual
           ( Diff.pretty
               def
-                { Diff.wrapping = Diff.Wrap $ 5 + 1 -- + 1 because of "
+                { Diff.wrapping = Diff.Wrap 5,
+                  Diff.context = Diff.FullContext
                 }
               "0900000000"
               "9000000000"
           )
-          [ "▼" & forEscapedString,
-            "09000" & showTextPrefix,
-            "00000" & showTextPostfix,
+          [ "▼",
+            "09000",
+            "00000",
             "╷",
             "│",
             "╵",
-            "90000" & showTextPrefix,
-            "00000" & showTextPostfix,
+            "90000",
+            "00000",
             "    ▲"
           ],
       testCase "Multiline changes (inbetween)" $
         expectDiffToEqual
           ( Diff.pretty
               def
-                { Diff.wrapping = Diff.Wrap $ 5 + 1 -- + 1 because of "
+                { Diff.wrapping = Diff.Wrap 5,
+                  Diff.context = Diff.FullContext
                 }
               "0000090000"
               "0090000000"
           )
-          [ "00000" & showTextPrefix,
+          [ "00000",
             "▼",
-            "90000" & showTextPostfix,
+            "90000",
             "╷",
             "│",
             "╵",
-            "00900" & showTextPrefix,
-            "  ▲" & forEscapedString,
-            "00000" & showTextPostfix
+            "00900",
+            "  ▲",
+            "00000"
           ],
       testCase "With separator text" $
         expectDiffToEqual
           ( Diff.pretty
               Diff.Config
                 { Diff.separatorText = Just "equals",
-                  Diff.wrapping = Diff.Wrap $ 5 + 1 -- + 1 because of "
+                  Diff.wrapping = Diff.Wrap 5,
+                  Diff.context = Diff.FullContext
                 }
               "0000090000"
               "0090000000"
           )
-          [ "00000" & showTextPrefix,
+          [ "00000",
             "▼",
-            "90000" & showTextPostfix,
+            "90000",
             "╷",
             "│ equals",
             "╵",
-            "00900" & showTextPrefix,
-            "  ▲" & forEscapedString,
-            "00000" & showTextPostfix
+            "00900",
+            "  ▲",
+            "00000"
           ]
     ]
 

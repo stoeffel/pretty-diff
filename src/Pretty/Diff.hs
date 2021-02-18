@@ -97,7 +97,7 @@ data Wrapping
   | NoWrap
 
 -- | Printing a full diff of both values separated by some pipes.
-pretty :: Show a => Config -> a -> a -> Text
+pretty :: Config -> Text -> Text -> Text
 pretty Config {separatorText, wrapping} x y =
   [ above wrapping x y,
     separator separatorText,
@@ -115,9 +115,9 @@ pretty Config {separatorText, wrapping} x y =
 --  ▼ ▼
 -- "1234"
 --  @
-above :: Show a => Wrapping -> a -> a -> Text
+above :: Wrapping -> Text -> Text -> Text
 above wrapping x y =
-  wrap wrapping [diffLine First down x y, Text.pack (show x)]
+  wrap wrapping [diffLine First down x y, x]
     & filterEmptyLines
     & Text.unlines
 
@@ -131,9 +131,9 @@ above wrapping x y =
 -- "_23"
 --  ▲
 --  @
-below :: Show a => Wrapping -> a -> a -> Text
+below :: Wrapping -> Text -> Text -> Text
 below wrapping x y =
-  wrap wrapping [Text.pack (show y), diffLine Second up x y]
+  wrap wrapping [y, diffLine Second up x y]
     & filterEmptyLines
     & Text.unlines
 
@@ -154,11 +154,11 @@ up = '▲'
 
 data Position = First | Second
 
-diffLine :: Show a => Position -> Char -> a -> a -> Text.Text
+diffLine :: Position -> Char -> Text -> Text -> Text
 diffLine pos differ a b =
   Diff.getDiff
-    (show a)
-    (show b)
+    (Text.unpack a)
+    (Text.unpack b)
     & mapMaybe (toDiffLine pos differ)
     & Text.pack
     & Text.stripEnd
