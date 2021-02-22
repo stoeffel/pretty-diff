@@ -1,3 +1,5 @@
+# 0.4.0.1
+- small fix for smaller diff context
 # 0.4.0.0
 - `pretty/above/below` take `Text` instead of `Show a` allowing the user to decide how to turn stuff into a string.
 - `pretty` render multiline input nicely
