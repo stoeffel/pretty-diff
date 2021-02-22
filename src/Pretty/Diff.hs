@@ -135,7 +135,7 @@ above' wrapping x y =
         Diff.getDiff
           (Text.unpack x)
           (Text.unpack y)
-   in ( any (hasDiff First) diffs,
+   in ( any hasDiff diffs,
         withDiffLine First down diffs
           & wrap wrapping
           & filterEmptyLines
@@ -163,7 +163,7 @@ below' wrapping x y =
         Diff.getDiff
           (Text.unpack x)
           (Text.unpack y)
-   in ( any (hasDiff Second) diffs,
+   in ( any hasDiff diffs,
         withDiffLine Second up diffs
           & wrap wrapping
           & filterEmptyLines
@@ -248,15 +248,11 @@ splitSurrounding n sep hadDiff xs =
 takeRight :: Int -> [a] -> [a]
 takeRight i xs = reverse (take i (reverse xs))
 
-hasDiff :: Position -> Diff.Diff Char -> Bool
-hasDiff pos d =
+hasDiff :: Diff.Diff Char -> Bool
+hasDiff d =
   case d of
-    Diff.First _ -> case pos of
-      First -> True
-      Second -> False
-    Diff.Second x -> case pos of
-      First -> False
-      Second -> True
+    Diff.First _ -> True
+    Diff.Second x -> True
     Diff.Both x _ -> False
 
 separator :: Maybe Text -> Text

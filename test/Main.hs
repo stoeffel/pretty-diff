@@ -262,6 +262,26 @@ tests =
             "▲▲▲",
             "JJJ",
             "▲▲▲"
+          ],
+      testCase "addition in actual" $
+        expectDiffToEqual
+          ( Diff.pretty
+              def {Diff.wrapping = Diff.Wrap 3, Diff.multilineContext = Diff.Surrounding 1 "..."}
+              "a\nb\nc\nxd\ne\n"
+              "a\nb\nc\nd\ne\n"
+          )
+          [ "...",
+            "c",
+            "▼",
+            "xd",
+            "e",
+            "╷",
+            "│",
+            "╵",
+            "...",
+            "c",
+            "d",
+            "e"
           ]
     ]
 
