@@ -1,3 +1,5 @@
+# 0.4.0.2
+- small fix for different line number count
 # 0.4.0.1
 - small fix for smaller diff context
 # 0.4.0.0
