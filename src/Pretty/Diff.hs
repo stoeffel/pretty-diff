@@ -38,7 +38,7 @@ where
 import qualified Data.Algorithm.Diff as Diff
 import Data.Default (Default, def)
 import Data.Function ((&))
-import Data.List (take, transpose, zipWith)
+import Data.List (take, transpose)
 import Data.Maybe (fromMaybe, mapMaybe)
 import Data.String (IsString)
 import Data.Text (Text)
@@ -108,11 +108,16 @@ pretty :: Config -> Text -> Text -> Text
 pretty Config {separatorText, wrapping, multilineContext} x y =
   let xs = Text.lines x
       ys = Text.lines y
-   in [ zipWith (above' wrapping) xs ys & extractContext multilineContext (False, [], []) & mconcat,
+   in [ zipWithSameLength (above' wrapping) xs ys & extractContext multilineContext (False, [], []) & mconcat,
         separator separatorText,
-        zipWith (below' wrapping) xs ys & extractContext multilineContext (False, [], []) & mconcat
+        zipWithSameLength (below' wrapping) xs ys & extractContext multilineContext (False, [], []) & mconcat
       ]
         & mconcat
+
+zipWithSameLength :: (Maybe a -> Maybe a -> b) -> [a] -> [a] -> [b]
+zipWithSameLength f [] ys = map (\y -> f Nothing (Just y)) ys
+zipWithSameLength f xs [] = map (\x -> f (Just x) Nothing) xs
+zipWithSameLength f (x : xs) (y : ys) = f (Just x) (Just y) : zipWithSameLength f xs ys
 
 -- | Printing The first value and the diff indicator above.
 --
@@ -126,11 +131,25 @@ pretty Config {separatorText, wrapping, multilineContext} x y =
 --  @
 above :: Wrapping -> Text -> Text -> Text
 above wrapping x y =
-  let (_, res) = above' wrapping x y
+  let (_, res) = above' wrapping (Just x) (Just y)
    in res
 
-above' :: Wrapping -> Text -> Text -> (Bool, Text)
-above' wrapping x y =
+above' :: Wrapping -> Maybe Text -> Maybe Text -> (Bool, Text)
+above' wrapping Nothing (Just y) =
+  ( True,
+    withDiffLine First down (map Diff.Second $ Text.unpack y)
+      & wrap wrapping
+      & filterEmptyLines
+      & Text.unlines
+  )
+above' wrapping (Just x) Nothing =
+  ( True,
+    withDiffLine First down (map Diff.First $ Text.unpack x)
+      & wrap wrapping
+      & filterEmptyLines
+      & Text.unlines
+  )
+above' wrapping (Just x) (Just y) =
   let diffs =
         Diff.getDiff
           (Text.unpack x)
@@ -154,11 +173,25 @@ above' wrapping x y =
 --  @
 below :: Wrapping -> Text -> Text -> Text
 below wrapping x y =
-  let (_, res) = below' wrapping x y
+  let (_, res) = below' wrapping (Just x) (Just y)
    in res
 
-below' :: Wrapping -> Text -> Text -> (Bool, Text)
-below' wrapping x y =
+below' :: Wrapping -> Maybe Text -> Maybe Text -> (Bool, Text)
+below' wrapping Nothing (Just y) =
+  ( True,
+    withDiffLine Second up (map Diff.Second $ Text.unpack y)
+      & wrap wrapping
+      & filterEmptyLines
+      & Text.unlines
+  )
+below' wrapping (Just x) Nothing =
+  ( True,
+    withDiffLine Second up (map Diff.First $ Text.unpack x)
+      & wrap wrapping
+      & filterEmptyLines
+      & Text.unlines
+  )
+below' wrapping (Just x) (Just y) =
   let diffs =
         Diff.getDiff
           (Text.unpack x)

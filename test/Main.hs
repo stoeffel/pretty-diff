@@ -282,6 +282,74 @@ tests =
             "c",
             "d",
             "e"
+          ],
+      testCase "wrapping w/ surrounding multilineContext" $
+        expectDiffToEqual
+          ( Diff.pretty
+              def {Diff.wrapping = Diff.Wrap 3, Diff.multilineContext = Diff.Surrounding 1 "..."}
+              "a\nb\nc\nxdddddddd\ne\n"
+              "a\nb\nc\nddddddddd\ne\n"
+          )
+          [ "...",
+            "c",
+            "▼",
+            "xdd",
+            "ddd",
+            "ddd",
+            "e",
+            "╷",
+            "│",
+            "╵",
+            "...",
+            "c",
+            "ddd",
+            "ddd",
+            "ddd",
+            "  ▲",
+            "e"
+          ],
+      testCase "few lines (no diff)" $
+        expectDiffToEqual
+          ( Diff.pretty
+              def {Diff.wrapping = Diff.NoWrap, Diff.multilineContext = Diff.Surrounding 1 "..."}
+              "a\n"
+              "a\n"
+          )
+          [ "a",
+            "╷",
+            "│",
+            "╵",
+            "a"
+          ],
+      testCase "first is longer" $
+        expectDiffToEqual
+          ( Diff.pretty
+              def
+              "a\nB"
+              "a\n"
+          )
+          [ "a",
+            "▼",
+            "B",
+            "╷",
+            "│",
+            "╵",
+            "a"
+          ],
+      testCase "second is longer" $
+        expectDiffToEqual
+          ( Diff.pretty
+              def
+              "a\n"
+              "a\nB"
+          )
+          [ "a",
+            "╷",
+            "│",
+            "╵",
+            "a",
+            "B",
+            "▲"
           ]
     ]
 
