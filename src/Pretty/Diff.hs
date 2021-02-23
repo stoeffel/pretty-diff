@@ -108,9 +108,17 @@ pretty :: Config -> Text -> Text -> Text
 pretty Config {separatorText, wrapping, multilineContext} x y =
   let xs = Text.lines x
       ys = Text.lines y
-   in [ zipWithSameLength (above' wrapping) xs ys & extractContext multilineContext (False, [], []) & mconcat,
+   in [ zipWithSameLength above' xs ys
+          & map (\(x, y) -> (x, wrap wrapping y))
+          & extractContext multilineContext (False, [], [])
+          & Text.unlines
+          & Text.dropAround (== '\n'),
         separator separatorText,
-        zipWithSameLength (below' wrapping) xs ys & extractContext multilineContext (False, [], []) & mconcat
+        zipWithSameLength below' xs ys
+          & map (\(x, y) -> (x, wrap wrapping y))
+          & extractContext multilineContext (False, [], [])
+          & Text.unlines
+          & Text.dropAround (== '\n')
       ]
         & mconcat
 
@@ -131,34 +139,21 @@ zipWithSameLength f (x : xs) (y : ys) = f (Just x) (Just y) : zipWithSameLength 
 --  @
 above :: Wrapping -> Text -> Text -> Text
 above wrapping x y =
-  let (_, res) = above' wrapping (Just x) (Just y)
-   in res
+  let (_, res) = above' (Just x) (Just y)
+   in wrap wrapping res
 
-above' :: Wrapping -> Maybe Text -> Maybe Text -> (Bool, Text)
-above' wrapping Nothing (Just y) =
-  ( True,
-    withDiffLine First down (map Diff.Second $ Text.unpack y)
-      & wrap wrapping
-      & filterEmptyLines
-      & Text.unlines
-  )
-above' wrapping (Just x) Nothing =
-  ( True,
-    withDiffLine First down (map Diff.First $ Text.unpack x)
-      & wrap wrapping
-      & filterEmptyLines
-      & Text.unlines
-  )
-above' wrapping (Just x) (Just y) =
+above' :: Maybe Text -> Maybe Text -> (Bool, [Text])
+above' Nothing (Just y) =
+  (True, withDiffLine First down (map Diff.Second $ Text.unpack y))
+above' (Just x) Nothing =
+  (True, withDiffLine First down (map Diff.First $ Text.unpack x))
+above' (Just x) (Just y) =
   let diffs =
         Diff.getDiff
           (Text.unpack x)
           (Text.unpack y)
    in ( any hasDiff diffs,
         withDiffLine First down diffs
-          & wrap wrapping
-          & filterEmptyLines
-          & Text.unlines
       )
 
 -- | Printing The second value and the diff indicator below.
@@ -173,44 +168,40 @@ above' wrapping (Just x) (Just y) =
 --  @
 below :: Wrapping -> Text -> Text -> Text
 below wrapping x y =
-  let (_, res) = below' wrapping (Just x) (Just y)
-   in res
+  let (_, res) = below' (Just x) (Just y)
+   in wrap wrapping res
 
-below' :: Wrapping -> Maybe Text -> Maybe Text -> (Bool, Text)
-below' wrapping Nothing (Just y) =
+below' :: Maybe Text -> Maybe Text -> (Bool, [Text])
+below' Nothing (Just y) =
   ( True,
     withDiffLine Second up (map Diff.Second $ Text.unpack y)
-      & wrap wrapping
-      & filterEmptyLines
-      & Text.unlines
   )
-below' wrapping (Just x) Nothing =
+below' (Just x) Nothing =
   ( True,
     withDiffLine Second up (map Diff.First $ Text.unpack x)
-      & wrap wrapping
-      & filterEmptyLines
-      & Text.unlines
   )
-below' wrapping (Just x) (Just y) =
+below' (Just x) (Just y) =
   let diffs =
         Diff.getDiff
           (Text.unpack x)
           (Text.unpack y)
    in ( any hasDiff diffs,
         withDiffLine Second up diffs
-          & wrap wrapping
-          & filterEmptyLines
-          & Text.unlines
       )
 
-wrap :: Wrapping -> [Text] -> [Text]
+wrap :: Wrapping -> [Text] -> Text
 wrap wrapping text =
-  case wrapping of
+  Text.stripEnd $ case wrapping of
     Wrap n ->
       text
         & fmap (Text.chunksOf n)
         & interleaveLists
-    NoWrap -> text
+        & filter
+          ( \x ->
+              not (Text.null (Text.dropAround (== ' ') x) && Text.length x >= n)
+          )
+        & Text.unlines
+    NoWrap -> Text.unlines text
 
 down :: Char
 down = '▼'
@@ -227,8 +218,8 @@ withDiffLine pos differ diffs =
           & mapMaybe (toDiffLine pos differ)
           & unzip
    in case pos of
-        First -> [Text.pack indicators & Text.stripEnd, Text.pack content & Text.stripEnd]
-        Second -> [Text.pack content & Text.stripEnd, Text.pack indicators & Text.stripEnd]
+        First -> filterEmptyLines [Text.pack indicators & Text.stripEnd, Text.pack content & Text.stripEnd]
+        Second -> filterEmptyLines [Text.pack content & Text.stripEnd, Text.pack indicators & Text.stripEnd]
 
 toDiffLine :: Position -> Char -> Diff.Diff Char -> Maybe (Char, Char)
 toDiffLine pos c d =
@@ -248,7 +239,7 @@ extractContext context@(Surrounding c sep) (hadDiff, acc, before) xs =
     [] ->
       if length before <= c
         then acc ++ before
-        else acc ++ take c before ++ [sep, "\n"]
+        else acc ++ take c before ++ [sep]
     (True, x) : rest ->
       extractContext
         context
@@ -272,11 +263,11 @@ splitSurrounding n sep hadDiff xs =
     then
       if length xs <= n * 2
         then xs
-        else take n xs ++ [sep, "\n"] ++ takeRight n xs
+        else take n xs ++ [sep] ++ takeRight n xs
     else
       if length xs <= n
         then xs
-        else [sep, "\n"] ++ takeRight n xs
+        else [sep] ++ takeRight n xs
 
 takeRight :: Int -> [a] -> [a]
 takeRight i xs = reverse (take i (reverse xs))
@@ -290,11 +281,11 @@ hasDiff d =
 
 separator :: Maybe Text -> Text
 separator maybeComparison =
-  [ "╷",
+  [ "\n╷\n",
     "│" <> (fromMaybe "" $ ((<>) " ") <$> maybeComparison),
-    "╵"
+    "\n╵\n"
   ]
-    & Text.unlines
+    & mconcat
 
 interleaveLists :: [[a]] -> [a]
 interleaveLists = mconcat . transpose

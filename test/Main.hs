@@ -308,53 +308,74 @@ tests =
             "  ▲",
             "e"
           ],
-      testCase "few lines (no diff)" $
-        expectDiffToEqual
-          ( Diff.pretty
-              def {Diff.wrapping = Diff.NoWrap, Diff.multilineContext = Diff.Surrounding 1 "..."}
-              "a\n"
-              "a\n"
-          )
-          [ "a",
-            "╷",
-            "│",
-            "╵",
-            "a"
-          ],
-      testCase "first is longer" $
-        expectDiffToEqual
-          ( Diff.pretty
-              def
-              "a\nB"
-              "a\n"
-          )
-          [ "a",
-            "▼",
-            "B",
-            "╷",
-            "│",
-            "╵",
-            "a"
-          ],
-      testCase "second is longer" $
-        expectDiffToEqual
-          ( Diff.pretty
-              def
-              "a\n"
-              "a\nB"
-          )
-          [ "a",
-            "╷",
-            "│",
-            "╵",
-            "a",
-            "B",
-            "▲"
-          ]
+      testGroup
+        "pretty (newlines)"
+        [ testCase "few lines (no diff)" $
+            expectDiffToEqual
+              ( Diff.pretty
+                  def {Diff.wrapping = Diff.NoWrap, Diff.multilineContext = Diff.Surrounding 1 "..."}
+                  "a\n"
+                  "a\n"
+              )
+              [ "a",
+                "╷",
+                "│",
+                "╵",
+                "a"
+              ],
+          testCase "first is longer" $
+            expectDiffToEqual
+              ( Diff.pretty
+                  def
+                  "a\nB"
+                  "a\n"
+              )
+              [ "a",
+                "▼",
+                "B",
+                "╷",
+                "│",
+                "╵",
+                "a"
+              ],
+          testCase "second is longer" $
+            expectDiffToEqual
+              ( Diff.pretty
+                  def
+                  "a\n"
+                  "a\nB"
+              )
+              [ "a",
+                "╷",
+                "│",
+                "╵",
+                "a",
+                "B",
+                "▲"
+              ],
+          testCase "extra newline" $
+            expectDiffToEqual
+              ( Diff.pretty
+                  def
+                  "a\nb"
+                  "a\n\nb"
+              )
+              [ "a",
+                "▼",
+                "b",
+                "╷",
+                "│",
+                "╵",
+                "a",
+                "",
+                "b",
+                "▲"
+              ]
+        ]
     ]
 
 expectDiffToEqual actual expected_ = do
-  let expected = Text.unlines expected_
+  let expected = Text.stripEnd (Text.unlines expected_)
   (actual @?= expected)
     `catch` ( \(e :: HUnitFailure) -> do
                 Text.IO.putStrLn "Actual was:"
