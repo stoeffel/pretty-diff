@@ -370,6 +370,22 @@ tests =
                 "",
                 "b",
                 "▲"
+              ],
+          testCase "extra newline at the end" $
+            expectDiffToEqual
+              ( Diff.pretty
+                  def
+                  "a\nb\n\n"
+                  "a\nb"
+              )
+              [ "a",
+                "b",
+                "▼",
+                "╷",
+                "│",
+                "╵",
+                "a",
+                "b"
               ]
         ]
     ]

@@ -134,9 +134,9 @@ above wrapping multilineContext x y =
 
 above' :: (Maybe Text, Maybe Text) -> (Bool, [Text])
 above' (Nothing, Just y) =
-  (True, withDiffLine First down (map Diff.Second $ Text.unpack y))
+  (True, withDiffLine First down (if y == "" then [Diff.Second ' '] else map Diff.Second $ Text.unpack y))
 above' (Just x, Nothing) =
-  (True, withDiffLine First down (map Diff.First $ Text.unpack x))
+  (True, withDiffLine First down (if x == "" then [Diff.First ' '] else map Diff.First $ Text.unpack x))
 above' (Just x, Just y) =
   let diffs =
         Diff.getDiff
@@ -168,13 +168,9 @@ below wrapping multilineContext x y =
 
 below' :: (Maybe Text, Maybe Text) -> (Bool, [Text])
 below' (Nothing, Just y) =
-  ( True,
-    withDiffLine Second up (map Diff.Second $ Text.unpack y)
-  )
+  (True, withDiffLine Second up (if y == "" then [Diff.Second ' '] else map Diff.Second $ Text.unpack y))
 below' (Just x, Nothing) =
-  ( True,
-    withDiffLine Second up (map Diff.First $ Text.unpack x)
-  )
+  (True, withDiffLine Second up (if x == "" then [Diff.First ' '] else map Diff.First $ Text.unpack x))
 below' (Just x, Just y) =
   let diffs =
         Diff.getDiff
@@ -288,7 +284,7 @@ interleaveLists = mconcat . transpose
 filterEmptyLines :: [Text] -> [Text]
 filterEmptyLines = filter (not . Text.null . Text.strip)
 
-sameLength :: [a] -> [a] -> [(Maybe a, Maybe a)]
+sameLength :: [a] -> [b] -> [(Maybe a, Maybe b)]
 sameLength [] ys = map (\y -> (Nothing, Just y)) ys
 sameLength xs [] = map (\x -> (Just x, Nothing)) xs
 sameLength (x : xs) (y : ys) = (Just x, Just y) : sameLength xs ys
