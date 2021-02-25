@@ -1,3 +1,6 @@
+# 0.4.0.3
+- more small fix
+
 # 0.4.0.2
 - small fix for different line number count
 
